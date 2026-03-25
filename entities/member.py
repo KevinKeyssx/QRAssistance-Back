@@ -1,18 +1,20 @@
-from ulid           import ULID
-from mongoengine    import Document, StringField, DateTimeField, ListField, BooleanField
-from datetime       import datetime
-from typing         import List
+from beanie     import Document
+from pydantic   import Field
+from ulid       import ULID
+from datetime   import datetime
+from typing     import List
 
 
 class Member( Document ):
-    meta = {'collection': 'members'}
+    id          : str = Field( default_factory=lambda: str(ULID()), alias="_id" )
+    name        : str
+    last_name   : str
+    classes     : List[str] = []
+    ulid_token  : str
+    saveFinger  : bool = False
 
-    id          : str       = StringField( primary_key = True, default = lambda: str( ULID() ))
-    name        : str       = StringField( required = True )
-    last_name   : str       = StringField( required = True )
-    classes     : List[str] = ListField( StringField(), required = True )
-    ulid        : str       = StringField( required = True )
-    saveFinger  : bool      = BooleanField( default = False )
+    created_at  : datetime = Field( default_factory=datetime.utcnow )
+    updated_at  : datetime = Field( default_factory=datetime.utcnow )
 
-    created_at  : datetime  = DateTimeField( default = datetime.utcnow )
-    updated_at  : datetime  = DateTimeField( default = datetime.utcnow )
+    class Settings:
+        name = "members"

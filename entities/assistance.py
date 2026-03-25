@@ -1,15 +1,19 @@
-from ulid           import ULID
-from mongoengine    import Document, StringField, DateTimeField, ListField, BooleanField
-from datetime       import datetime
-from typing         import List
+from beanie             import Document, Link
+from pydantic           import Field
+from ulid               import ULID
+from datetime           import datetime
+from entities.member    import Member
+from entities.qr        import QR
 
 
 class Assistance( Document ):
-    meta = {'collection': 'assistances'}
+    id          : str       = Field( default_factory=lambda: str(ULID()), alias="_id" )
 
-    id          : str   = StringField( primary_key = True, default = lambda: str( ULID() ))
-    member_id   : str   = StringField( required = True )
-    qr_id       : str   = StringField( required = True )
+    member      : Link[Member]
+    qr          : Link[QR]
 
-    created_at  : datetime  = DateTimeField( default = datetime.utcnow )
-    updated_at  : datetime  = DateTimeField( default = datetime.utcnow )
+    created_at  : datetime    = Field( default_factory=datetime.utcnow )
+    updated_at  : datetime    = Field( default_factory=datetime.utcnow )
+
+    class Settings:
+        name = "assistances"

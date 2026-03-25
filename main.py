@@ -3,12 +3,12 @@ from fastapi                    import FastAPI
 from fastapi.middleware.cors    import CORSMiddleware
 
 # Routers
-from routers.qr_router      import qr_router
-from routers.member_router  import member_router
+from routers.qr_router          import qr_router
+from routers.member_router      import member_router
+from routers.assistance_router  import assistance_router
 
 # Services
-from services.qr_service        import init_db
-from services.member_service    import init_db
+from database import init_database
 
 # New FastAPI
 app = FastAPI(
@@ -32,8 +32,9 @@ app.add_middleware(
 
 @app.on_event( "startup" )
 async def start_database():
-	await init_db()
+	await init_database()
 
 # include_router
 app.include_router( qr_router )
 app.include_router( member_router )
+app.include_router( assistance_router )

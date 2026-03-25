@@ -7,19 +7,19 @@ from dtos.paginated_dto import PaginatedResponse
 
 
 class MemberCreateDTO(BaseModel):
-    name        : str = Field(..., min_length=2)
-    last_name   : str = Field(..., min_length=2)
-    classes     : List[str] = []
-    ulid_token  : str = Field(..., description="Token ULID único del miembro")
-    saveFinger  : bool = False
+    name        : str = Field(..., min_length=2, max_length=50, description="Nombre del miembro")
+    last_name   : str = Field(..., min_length=2, max_length=50, description="Apellido del miembro")
+    classes     : List[str] = Field(default_factory=list, description="Clases del miembro")
+    ulid_token  : str = Field(..., min_length=26, max_length=26, description="Token ULID único del miembro")
+    saveFinger  : bool = Field(default=False, description="Indica si se debe guardar la huella digital del miembro")
 
 
 class MemberUpdateDTO(BaseModel):
-    name        : Optional[str]         = None
-    last_name   : Optional[str]         = None
-    classes     : Optional[List[str]]   = None
-    ulid_token  : Optional[str]         = None
-    saveFinger  : Optional[bool]        = None
+    name        : Optional[str]         = Field(None, min_length=2, max_length=50, description="Nombre del miembro")
+    last_name   : Optional[str]         = Field(None, min_length=2, max_length=50, description="Apellido del miembro")
+    classes     : Optional[List[str]]   = Field(None, description="Clases del miembro")
+    ulid_token  : Optional[str]         = Field(None, min_length=26, max_length=26, description="Token ULID único del miembro")
+    saveFinger  : Optional[bool]        = Field(None, description="Indica si se debe guardar la huella digital del miembro")
 
 
 class MemberReadDTO(MemberCreateDTO):

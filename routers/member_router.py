@@ -69,7 +69,10 @@ async def get_member(
     member = await member_services.get_member_by_id( member_id )
 
     if not member:
-        raise HTTPException(status_code=404, detail="Miembro no encontrado")
+        raise HTTPException(
+            status_code = status.HTTP_404_NOT_FOUND,
+            detail      = "Miembro no encontrado"
+        )
 
     return member
 
@@ -86,7 +89,10 @@ async def update_member(
     updated = await member_services.update_member( member_id, member_data )
 
     if not updated:
-        raise HTTPException(status_code=404, detail="No se pudo actualizar el miembro")
+        raise HTTPException(
+            status_code = status.HTTP_404_NOT_FOUND,
+            detail      = "Miembro no encontrado"
+        )
 
     return updated
 

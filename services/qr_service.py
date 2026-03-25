@@ -10,6 +10,7 @@ from database import db
 
 # Collections
 from entities.qr import QR
+from entities.assistance import Assistance
 
 
 async def init_db():
@@ -55,3 +56,43 @@ async def delete_qr( qr_id: str ) -> bool:
     await qr.delete()
 
     return True
+
+
+async def get_all_qrs_with_stats(
+    page: int = 1,
+    size: int = 10,
+    year: int = None
+) -> dict:
+    # 1. Obtener el rango del año actual
+    current_year    = year or datetime.now().year
+    start_of_year   = datetime( current_year, 1, 1, 0, 0, 0 )
+    end_of_year     = datetime( current_year, 12, 31, 23, 59, 59 )
+
+    # 2. Crear la consulta base con filtro de fecha
+    query = QR.find( QR.date >= start_of_year, QR.date <= end_of_year )
+
+    # 3. Calcular totales para la paginación
+    total_items = await query.count()
+    pages_count = ( total_items + size - 1 ) // size
+
+    # 4. Obtener los QRs paginados
+    # .skip() se salta los elementos de páginas anteriores
+    qrs = await query.sort( "-date" ).skip(( page - 1 ) * size ).limit( size ).to_list()
+
+    results = []
+
+    for qr in qrs:
+        count   = await Assistance.find( Assistance.qr.id == qr.id ).count()
+        qr_dict = qr.model_dump()
+
+        qr_dict["assist_count"] = count
+
+        results.append( qr_dict )
+
+    return {
+        "items": results,
+        "total": total_items,
+        "page": page,
+        "size": size,
+        "pages": pages_count
+    }

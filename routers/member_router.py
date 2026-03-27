@@ -14,8 +14,6 @@ from fastapi import Body, status, APIRouter, Path, HTTPException, Depends
 from dtos.member_dto import MemberCreateDTO, MemberReadDTO, MemberUpdateDTO, PaginatedMemberResponse
 from dtos.paginated_dto import Pagination
 
-
-
 # Variables
 member_router   = APIRouter()
 version         = "/api/v1/"
@@ -33,7 +31,7 @@ tags            = "Member Services"
 async def register_member(
     member_in: MemberCreateDTO
 ) -> MemberReadDTO:
-    new_member = Member(**member_in.model_dump())
+    new_member = Member( **member_in.model_dump() )
 
     return await new_member.insert()
 

@@ -6,10 +6,11 @@ from dtos.paginated_dto import PaginatedResponse
 
 
 class QRCreateDTO(BaseModel):
-    type        : QRType = Field(..., description="Tipo de QR")
-    date        : datetime = Field(..., description="Fecha del QR")
-    start_hour  : str = Field(..., min_length = 5, max_length = 5, example = "09:00", description="Hora de inicio del QR")
-    end_hour    : str = Field(..., min_length = 5, max_length = 5, example = "10:30", description="Hora de fin del QR")
+    session_id  : str       = Field(..., min_length = 26, max_length = 26, description="ID de la sesión")
+    type        : QRType    = Field(..., description="Tipo de QR")
+    date        : datetime  = Field(..., description="Fecha del QR")
+    start_hour  : str       = Field(..., min_length = 5, max_length = 5, example = "09:00", description="Hora de inicio del QR")
+    end_hour    : str       = Field(..., min_length = 5, max_length = 5, example = "10:30", description="Hora de fin del QR")
 
 
 class QRUpdateDTO(BaseModel):

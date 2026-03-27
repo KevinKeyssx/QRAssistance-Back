@@ -23,10 +23,11 @@ class QRType( str, Enum ):
 
 class QR( Document ):
 	id          : str       = Field( default_factory = lambda: str( ULID() ), alias = "_id" )
-	type        : QRType
-	date        : datetime
-	start_hour  : str
-	end_hour    : str
+	session_id  : str       = Field( ..., min_length = 26, max_length = 26 )
+	type        : QRType    = Field( ... )
+	date        : datetime  = Field( ... )
+	start_hour  : str       = Field( ..., min_length = 5, max_length = 5 )
+	end_hour    : str       = Field( ..., min_length = 5, max_length = 5 )
 
 	created_at  : datetime  = Field( default_factory = datetime.utcnow )
 	updated_at  : datetime  = Field( default_factory = datetime.utcnow )

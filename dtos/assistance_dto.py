@@ -6,8 +6,8 @@ from .qr_dto        import QRReadDTO
 
 
 class AssistanceCreateDTO( BaseModel ):
-    member_id   : str = Field( ..., description="ID del miembro" )
-    qr_id       : str = Field( ..., description="ID del QR" )
+    member_ulid     : str = Field( ..., description="ULID del miembro" )
+    qr_session_id   : str = Field( ..., description="ID de la sesión del QR" )
 
 
 class AssistanceReadDTO( BaseModel ):

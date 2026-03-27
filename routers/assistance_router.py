@@ -1,15 +1,33 @@
 from fastapi    import APIRouter, status, HTTPException, status
-from typing     import List
+import pytz
+
+# Env
+import os
+from dotenv import load_dotenv
+
+# Datetime
 from datetime   import datetime, time
 
+# Typing
+from typing     import List
+
+# DTO
 from dtos.assistance_dto import AssistanceCreateDTO, AssistanceReadDTO
 
+# Services
 import services.assistance_service as assistance_services
 
+# Entities
+from entities.assistance    import Assistance
+from entities.member        import Member
+from entities.qr            import QR
 
-from entities.assistance import Assistance
-from entities.member import Member
-from entities.qr import QR
+
+load_dotenv( dotenv_path = '.env' )
+
+
+TIMEZONE = os.getenv( "TIMEZONE" )
+
 
 assistance_router   = APIRouter()
 version             = "/api/v1/"
@@ -25,22 +43,22 @@ tags                = "Assistances Services"
     tags            = [tags]
 )
 async def register_assistance(data: AssistanceCreateDTO) -> Assistance:
-    # 1. Obtener datos
-    member  = await Member.get( data.member_id )
-    qr      = await QR.get( data.qr_id )
+    member  = await Member.find_one( Member.ulid_token == data.member_ulid )
+    qr      = await QR.find_one( QR.session_id == data.qr_session_id )
 
     if not member or not qr:
         raise HTTPException(
             status_code = status.HTTP_404_NOT_FOUND,
-            detail      = "Miembro o QR no encontrado"
+            detail      = f"Miembro o QR no encontrado {member} {qr}"
         )
 
     # 2. Obtener hora actual en UTC
-    now_utc         = datetime.utcnow()
+    chile_tz        = pytz.timezone( TIMEZONE )
+    now_utc         = datetime.now( chile_tz )
     current_date    = now_utc.date()
     current_time    = now_utc.time()
 
-    if await assistance_services.get_assistance_by_member_id_and_qr_id( data ):
+    if await assistance_services.get_assistance_by_member_ulid_and_qr_session_id( data ):
         raise HTTPException(
             status_code = status.HTTP_400_BAD_REQUEST,
             detail      = "Ya registraste asistencia con este QR."
@@ -73,14 +91,19 @@ async def register_assistance(data: AssistanceCreateDTO) -> Assistance:
             detail      = "Formato de hora en QR inválido"
         )
 
-    if not ( start_time <= current_time <= end_time ):
+    if start_time <= end_time:
+        is_in_range = start_time <= current_time <= end_time
+    else:
+        is_in_range = current_time >= start_time or current_time <= end_time
+
+    if not is_in_range:
         raise HTTPException(
             status_code = status.HTTP_400_BAD_REQUEST,
             detail      = f"Fuera de horario. Válido de {qr.start_hour} a {qr.end_hour}. Hora actual: {current_time.strftime('%H:%M')}"
         )
 
-    # 5. Si todo está bien, registramos
-    assistance = await assistance_services.register_assistance( data )
+    # 5. Registramos asistencia
+    assistance = await assistance_services.register_assistance( member, qr )
 
     if not assistance:
         raise HTTPException(

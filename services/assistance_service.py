@@ -16,11 +16,10 @@ async def init_db():
 	)
 
 
-async def register_assistance( data: AssistanceCreateDTO ) -> Assistance:
-    member = await Member.get( data.member_id )
-
-    qr = await QR.get( data.qr_id )
-
+async def register_assistance(
+    member  : Member,
+    qr      : QR
+) -> Assistance:
     if not member or not qr:
         return None
 
@@ -33,10 +32,14 @@ async def get_all_assistances() -> List[Assistance]:
     return await Assistance.find_all( fetch_links = True ).to_list()
 
 
-async def get_assistance_by_member_id_and_qr_id( data: AssistanceCreateDTO ) -> Assistance:
+async def get_assistance_by_member_ulid_and_qr_session_id(
+    data: AssistanceCreateDTO
+) -> Assistance:
     return await Assistance.find_one(
-        Assistance.member.id == data.member_id,
-        Assistance.qr.id == data.qr_id,
+        Assistance.member.ulid_token == data.member_ulid,
+
+        Assistance.qr.session_id == data.qr_session_id,
+
         fetch_links = True
     )
 

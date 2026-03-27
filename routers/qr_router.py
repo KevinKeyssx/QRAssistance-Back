@@ -33,7 +33,7 @@ async def get_all_qrs(
     pagination: Pagination = Depends(),
     year: int = Query(
         None,
-        ge          = 1900,
+        ge          = 2026,
         le          = 2100,
         description = "Año"
     )

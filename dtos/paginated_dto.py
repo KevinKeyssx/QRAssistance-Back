@@ -18,7 +18,8 @@ class Pagination( BaseModel ):
         1,
         ge          = 1,
         le          = 1000000,
-        description = "Número de página"
+        description = "Número de página",
+        examples    = [1]
     ),
     size: int = Query(
         10,

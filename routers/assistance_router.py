@@ -42,7 +42,9 @@ tags                = "Assistances Services"
     status_code     = status.HTTP_201_CREATED,
     tags            = [tags]
 )
-async def register_assistance(data: AssistanceCreateDTO) -> Assistance:
+async def register_assistance(
+    data: AssistanceCreateDTO
+) -> Assistance:
     member  = await Member.find_one( Member.ulid_token == data.member_ulid )
     qr      = await QR.find_one( QR.session_id == data.qr_session_id )
 
@@ -50,6 +52,13 @@ async def register_assistance(data: AssistanceCreateDTO) -> Assistance:
         raise HTTPException(
             status_code = status.HTTP_404_NOT_FOUND,
             detail      = f"Miembro o QR no encontrado {member} {qr}"
+        )
+
+    #1.1 Validamos que el miembro pueda asistir a esta clase
+    if qr.type not in member.classes:
+        raise HTTPException(
+            status_code = status.HTTP_400_BAD_REQUEST,
+            detail      = f"El miembro no puede asistir a esta clase."
         )
 
     # 2. Obtener hora actual en UTC

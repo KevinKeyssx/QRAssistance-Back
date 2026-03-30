@@ -23,7 +23,7 @@ class QRType( str, Enum ):
 
 class QR( Document ):
 	id          : str       = Field( default_factory = lambda: str( ULID() ), alias = "_id" )
-	session_id  : str       = Field( ..., min_length = 26, max_length = 26 )
+	session_id  : str       = Field( default_factory = lambda: str( ULID() ), min_length = 26, max_length = 26 )
 	type        : QRType    = Field( ... )
 	date        : datetime  = Field( ... )
 	start_hour  : str       = Field( ..., min_length = 5, max_length = 5 )

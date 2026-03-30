@@ -1,8 +1,15 @@
 # Python
+import os
+import pytz
+from datetime import datetime
 from typing import List
+from dotenv import load_dotenv
 
 # Services
 import services.qr_service as qr_services
+
+# Utils
+from utils.classes import LDS_CLASSES
 
 # Model
 from entities.qr import QR
@@ -13,6 +20,9 @@ from fastapi import Body, status, APIRouter, Path, HTTPException, Query, Depends
 # DTOs
 from dtos.qr_dto import QRCreateDTO, QRReadDTO, QRUpdateDTO, QRWithCountDTO, PaginatedQRResponse
 from dtos.paginated_dto import Pagination
+
+load_dotenv( dotenv_path = '.env' )
+TIMEZONE = os.getenv( "TIMEZONE" )
 
 # Variables
 qr_router   = APIRouter()
@@ -47,6 +57,45 @@ async def get_all_qrs(
         size = pagination.size,
         year = year
     )
+
+# Create multiples QRs
+@qr_router.post(
+    path            = endpoint + "sunday",
+    response_model  = List[QRReadDTO],
+    status_code     = status.HTTP_201_CREATED,
+    tags            = [tags]
+)
+async def create_sunday_qrs() -> List[QRReadDTO]:
+    chile_tz        = pytz.timezone( TIMEZONE )
+    now_utc         = datetime.now( chile_tz )
+    current_date    = now_utc.date()
+
+    if ( now_utc.weekday() != 6 ):
+        raise HTTPException(
+            status_code = status.HTTP_400_BAD_REQUEST,
+            detail      = "Solo se pueden generar los QRs los días domingo."
+        )
+
+    existing_qrs = await qr_services.get_qrs_by_date( current_date )
+
+    if ( existing_qrs ):
+        return existing_qrs
+
+    start_hour  = os.getenv( "START_HOUR" )
+    end_hour    = os.getenv( "END_HOUR" )
+    new_qrs     = [ ]
+
+    for item in LDS_CLASSES:
+        qr_data = {
+            "type"          : item[ "slug" ],
+            "date"          : now_utc,
+            "start_hour"    : start_hour,
+            "end_hour"      : end_hour
+        }
+
+        new_qrs.append( QR( **qr_data ))
+
+    return await qr_services.create_qrs( new_qrs )
 
 # Create QR
 @qr_router.post(

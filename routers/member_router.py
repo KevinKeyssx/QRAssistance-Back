@@ -26,11 +26,23 @@ tags            = "Member Services"
     path            = endpoint,
     response_model  = MemberReadDTO,
     status_code     = status.HTTP_201_CREATED,
-    tags            = [tags]
+    tags            = [ tags ]
 )
 async def register_member(
     member_in: MemberCreateDTO
 ) -> MemberReadDTO:
+    is_duplicate = await member_services.check_duplicate_member(
+        name        = member_in.name,
+        last_name   = member_in.last_name,
+        classes     = member_in.classes
+    )
+
+    if ( is_duplicate ):
+        raise HTTPException(
+            status_code = status.HTTP_400_BAD_REQUEST,
+            detail      = "Miembro ya existe registrado."
+        )
+
     new_member = Member( **member_in.model_dump() )
 
     return await new_member.insert()
@@ -73,6 +85,27 @@ async def get_member(
         )
 
     return member
+
+# SEARCH BY NAME
+@member_router.get(
+    path            = f"{endpoint}search/{{query_text}}",
+    response_model  = PaginatedMemberResponse,
+    status_code     = status.HTTP_200_OK,
+    tags            = [ tags ]
+)
+async def search_members(
+    query_text  : str = Path( ... ),
+    pagination  : Pagination = Depends()
+) -> PaginatedMemberResponse:
+    members, total = await member_services.get_members_by_name( query_text, pagination )
+
+    return PaginatedMemberResponse(
+        items   = members,
+        total   = total,
+        page    = pagination.page,
+        size    = pagination.size,
+        pages   = ( total + pagination.size - 1 ) // pagination.size if pagination.size > 0 else 0
+    )
 
 # UPDATE
 @member_router.put(

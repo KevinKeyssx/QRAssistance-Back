@@ -1,12 +1,13 @@
 from typing import List
-from entities.assistance import Assistance
-from entities.member import Member
-from entities.qr import QR
-from dtos.assistance_dto import AssistanceCreateDTO
 
 # MongoDB
-from beanie import init_beanie
-from database import db
+from beanie     import init_beanie
+from database   import db
+
+from entities.assistance    import Assistance
+from entities.member        import Member
+from entities.qr            import QR
+from dtos.assistance_dto    import AssistanceCreateDTO
 
 
 async def init_db():

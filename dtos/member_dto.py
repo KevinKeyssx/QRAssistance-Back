@@ -1,4 +1,4 @@
-from pydantic   import BaseModel, Field
+from pydantic   import BaseModel, Field, field_validator
 from typing     import List, Optional
 from datetime   import datetime
 
@@ -7,10 +7,15 @@ from dtos.paginated_dto import PaginatedResponse
 
 
 class MemberCreateDTO( BaseModel ):
-    name        : str       = Field(..., min_length=2, max_length=50, description="Nombre del miembro")
-    last_name   : str       = Field(..., min_length=2, max_length=50, description="Apellido del miembro")
-    classes     : List[str] = Field(default_factory=list, description="Clases del miembro")
-    saveFinger  : bool      = Field(default=False, description="Indica si se debe guardar la huella digital del miembro")
+    name        : str       = Field( ..., min_length=2, max_length=50, description="Nombre del miembro" )
+    last_name   : str       = Field( ..., min_length=2, max_length=50, description="Apellido del miembro" )
+    classes     : List[ str ] = Field( default_factory=list, description="Clases del miembro" )
+    saveFinger  : bool      = Field( default=False, description="Indica si se debe guardar la huella digital del miembro" )
+
+    @field_validator( 'name', 'last_name' )
+    @classmethod
+    def format_names( cls, value: str ) -> str:
+        return value.strip().title()
 
 
 class MemberUpdateDTO( BaseModel ):

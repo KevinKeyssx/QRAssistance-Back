@@ -34,6 +34,20 @@ async def create_qr( qr_data: QR ) -> QR:
     return await qr_data.insert()
 
 
+async def create_qrs( qrs_data: List[ QR ] ) -> List[ QR ]:
+    if ( qrs_data ):
+        await QR.insert_many( qrs_data )
+
+    return qrs_data
+
+
+async def get_qrs_by_date( target_date ) -> List[ QR ]:
+    start_of_day    = datetime( target_date.year, target_date.month, target_date.day, 0, 0, 0 )
+    end_of_day      = datetime( target_date.year, target_date.month, target_date.day, 23, 59, 59 )
+
+    return await QR.find( QR.date >= start_of_day, QR.date <= end_of_day ).to_list()
+
+
 async def update_qr( qr_id: str, update_data: dict ) -> Optional[QR]:
     qr = await QR.get( qr_id )
 

@@ -3,9 +3,10 @@ import motor.motor_asyncio
 from beanie import init_beanie
 
 # Entities
-from entities.qr import QR
-from entities.member import Member
-from entities.assistance import Assistance
+from entities.qr            import QR
+from entities.member        import Member
+from entities.assistance    import Assistance
+from entities.surveys       import Survey
 
 # Env
 import os
@@ -15,7 +16,6 @@ load_dotenv( dotenv_path = '.env' )
 
 db_name         = os.getenv( "MONGONAME" )
 MONGOURL        = os.getenv( "MONGO_PUBLIC_URL" )
-# MONGOURL        = os.getenv( "MONGO_LOCAL_URL" )
 DATABASE_URL    = MONGOURL
 client          = motor.motor_asyncio.AsyncIOMotorClient( DATABASE_URL )
 db              = client[db_name]
@@ -31,6 +31,7 @@ async def init_database():
         document_models=[
             QR,
             Member,
-            Assistance
+            Assistance,
+            Survey
         ]
     )

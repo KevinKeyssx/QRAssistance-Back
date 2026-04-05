@@ -2,111 +2,86 @@
 from typing     import List, Optional
 from datetime   import datetime
 
-# MongoDB
-from beanie import init_beanie
-
-# Database
-from database import db
-
-# Collections
-from entities.qr import QR
-from entities.assistance import Assistance
+# Entities
+from entities.surveys   import Survey
+from entities.member    import Member
+from entities.qr        import QR
 
 
 async def init_db():
 	await init_beanie(
 		database        = db,
-		document_models = [ QR ]
+		document_models = [ Survey ]
 	)
 
 
-async def get_qr_by_id( qr_id: str ) -> Optional[QR]:
-    return await QR.get( qr_id )
+async def get_survey_by_member_and_qr(
+    member  : Member,
+    qr      : QR
+) -> Optional[ Survey ]:
+    return await Survey.find_one(
+        Survey.member.id == member.id,
+        Survey.qr.id    == qr.id,
+        fetch_links      = True
+    )
 
 
-async def get_all_qrs() -> List[ QR ]:
-	qrs = await QR.find_all().to_list()
+async def get_all_surveys(
+    year  : int,
+    month : Optional[ int ] = None
+) -> List[ Survey ]:
+    if month:
+        # Primer día del mes hasta primer día del mes siguiente
+        next_year  = year + 1 if month == 12 else year
+        next_month = 1        if month == 12 else month + 1
 
-	return qrs
+        start_range = datetime( year,      month,      1, 0, 0, 0 )
+        end_range   = datetime( next_year, next_month, 1, 0, 0, 0 )
+    else:
+        # Año completo
+        start_range = datetime( year, 1,  1,  0,  0,  0 )
+        end_range   = datetime( year, 12, 31, 23, 59, 59 )
 
-
-async def create_qr( qr_data: QR ) -> QR:
-    return await qr_data.insert()
-
-
-async def create_qrs( qrs_data: List[ QR ] ) -> List[ QR ]:
-    if ( qrs_data ):
-        await QR.insert_many( qrs_data )
-
-    return qrs_data
-
-
-async def get_qrs_by_date( target_date ) -> List[ QR ]:
-    start_of_day    = datetime( target_date.year, target_date.month, target_date.day, 0, 0, 0 )
-    end_of_day      = datetime( target_date.year, target_date.month, target_date.day, 23, 59, 59 )
-
-    return await QR.find( QR.date >= start_of_day, QR.date <= end_of_day ).to_list()
-
-
-async def update_qr( qr_id: str, update_data: dict ) -> Optional[QR]:
-    qr = await QR.get( qr_id )
-
-    if qr:
-        update_data["updated_at"] = datetime.utcnow()
-
-        await qr.set( update_data )
-
-        return qr
-
-    return None
+    return await (
+        Survey
+        .find(
+            Survey.created_at >= start_range,
+            Survey.created_at <  end_range,
+            fetch_links       =  True
+        )
+        .sort( "-created_at" )
+        .to_list()
+    )
 
 
-async def delete_qr( qr_id: str ) -> bool:
-    qr = await QR.get( qr_id )
-
-    if not qr:
-        raise HTTPException(status_code=404, detail="QR no encontrado")
-
-    await qr.delete()
-
-    return True
+async def create_survey( survey: Survey ) -> Survey:
+    created = await survey.insert()
+    await created.fetch_all_links()
+    return created
 
 
-async def get_all_qrs_with_stats(
-    page: int = 1,
-    size: int = 10,
-    year: int = None
-) -> dict:
-    # 1. Obtener el rango del año actual
-    current_year    = year or datetime.now().year
-    start_of_year   = datetime( current_year, 1, 1, 0, 0, 0 )
-    end_of_year     = datetime( current_year, 12, 31, 23, 59, 59 )
+# async def update_survey(
+#     survey_id   : str,
+#     update_data : dict
+# ) -> Optional[ Survey ]:
+#     survey = await Survey.get( survey_id )
 
-    # 2. Crear la consulta base con filtro de fecha
-    query = QR.find( QR.date >= start_of_year, QR.date <= end_of_year )
+#     if not survey:
+#         return None
 
-    # 3. Calcular totales para la paginación
-    total_items = await query.count()
-    pages_count = ( total_items + size - 1 ) // size
+#     update_data[ "updated_at" ] = datetime.utcnow()
 
-    # 4. Obtener los QRs paginados
-    # .skip() se salta los elementos de páginas anteriores
-    qrs = await query.sort( "-date" ).skip(( page - 1 ) * size ).limit( size ).to_list()
+#     await survey.set( update_data )
 
-    results = []
+#     return survey
 
-    for qr in qrs:
-        count   = await Assistance.find( Assistance.qr.id == qr.id ).count()
-        qr_dict = qr.model_dump()
 
-        qr_dict["assist_count"] = count
+# async def delete_survey( survey_id: str ) -> bool:
+#     survey = await Survey.get( survey_id )
 
-        results.append( qr_dict )
+#     if not survey:
+#         return False
 
-    return {
-        "items": results,
-        "total": total_items,
-        "page": page,
-        "size": size,
-        "pages": pages_count
-    }
+#     await survey.delete()
+
+    # return True

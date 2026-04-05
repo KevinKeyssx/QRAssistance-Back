@@ -6,6 +6,7 @@ from fastapi.middleware.cors    import CORSMiddleware
 from routers.qr_router          import qr_router
 from routers.member_router      import member_router
 from routers.assistance_router  import assistance_router
+from routers.survey_router      import survey_router
 
 # Services
 from database import init_database
@@ -38,3 +39,4 @@ async def start_database():
 app.include_router( qr_router )
 app.include_router( member_router )
 app.include_router( assistance_router )
+app.include_router( survey_router )

@@ -1,5 +1,5 @@
 # Python
-from typing import List
+from typing import List, Optional
 
 # Services
 import services.member_service as member_services
@@ -8,7 +8,7 @@ import services.member_service as member_services
 from entities.member import Member
 
 # FastApi
-from fastapi import Body, status, APIRouter, Path, HTTPException, Depends
+from fastapi import Body, status, APIRouter, Path, HTTPException, Depends, Query
 
 # DTOs
 from dtos.member_dto import MemberCreateDTO, MemberReadDTO, MemberUpdateDTO, PaginatedMemberResponse
@@ -57,55 +57,55 @@ async def register_member(
 async def get_members(
     pagination: Pagination = Depends(),
 ) -> PaginatedMemberResponse:
-    members = await member_services.get_all_members(pagination)
+    members = await member_services.get_all_members( pagination )
 
     return PaginatedMemberResponse(
         items   = members,
-        total   = len(members),
+        total   = len( members ),
         page    = pagination.page,
         size    = pagination.size,
-        pages   = (len(members) + pagination.size - 1) // pagination.size
+        pages   = ( len( members ) + pagination.size - 1 ) // pagination.size
     )
 
 # READ ONE
-@member_router.get(
-    path            = f"{endpoint}{{member_id}}",
-    response_model  = MemberReadDTO,
-    tags            = [tags]
-)
-async def get_member(
-    member_id: str = Path( ... )
-) -> MemberReadDTO:
-    member = await member_services.get_member_by_id( member_id )
+# @member_router.get(
+#     path            = f"{endpoint}{{member_id}}",
+#     response_model  = MemberReadDTO,
+#     tags            = [tags]
+# )
+# async def get_member(
+#     member_id: str = Path( ... )
+# ) -> MemberReadDTO:
+#     member = await member_services.get_member_by_id( member_id )
 
-    if not member:
-        raise HTTPException(
-            status_code = status.HTTP_404_NOT_FOUND,
-            detail      = "Miembro no encontrado"
-        )
+#     if not member:
+#         raise HTTPException(
+#             status_code = status.HTTP_404_NOT_FOUND,
+#             detail      = "Miembro no encontrado"
+#         )
 
-    return member
+#     return member
 
 # SEARCH BY NAME
 @member_router.get(
-    path            = f"{endpoint}search/{{query_text}}",
-    response_model  = PaginatedMemberResponse,
-    status_code     = status.HTTP_200_OK,
-    tags            = [ tags ]
+	path			= f"{endpoint}search",
+	response_model	= PaginatedMemberResponse,
+	status_code		= status.HTTP_200_OK,
+	tags			= [ tags ]
 )
 async def search_members(
-    query_text  : str = Path( ... ),
-    pagination  : Pagination = Depends()
+	query_text	: Optional[ str ] = Query( None ),
+	pagination	: Pagination = Depends()
 ) -> PaginatedMemberResponse:
-    members, total = await member_services.get_members_by_name( query_text, pagination )
+	members, total = await member_services.get_members_by_name( query_text, pagination )
 
-    return PaginatedMemberResponse(
-        items   = members,
-        total   = total,
-        page    = pagination.page,
-        size    = pagination.size,
-        pages   = ( total + pagination.size - 1 ) // pagination.size if pagination.size > 0 else 0
-    )
+	return PaginatedMemberResponse(
+		items	= members,
+		total	= total,
+		page	= pagination.page,
+		size	= pagination.size,
+		pages	= ( total + pagination.size - 1 ) // pagination.size if pagination.size > 0 else 0
+	)
 
 # UPDATE
 @member_router.put(

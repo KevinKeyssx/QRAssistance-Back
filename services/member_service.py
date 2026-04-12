@@ -84,27 +84,31 @@ def build_accent_regex( query: str ) -> str:
 
 
 async def get_members_by_name(
-    query_text: str,
-    pagination: Pagination
+	query_text	: Optional[ str ],
+	pagination	: Pagination
 ) -> Tuple[ List[ Member ], int ]:
-    words               = query_text.strip().split()
-    query_conditions    = []
+	if ( not query_text or not query_text.strip() ):
+		final_filter = {}
+	else:
+		words				= query_text.strip().split()
+		query_conditions	= [ ]
 
-    for word in words:
-        regex_pattern = build_accent_regex( word )
+		for word in words:
+			regex_pattern = build_accent_regex( word )
 
-        query_conditions.append({
-            "$or": [
-                { "name": { "$regex": regex_pattern, "$options": "i" } },
-                { "last_name": { "$regex": regex_pattern, "$options": "i" } }
-            ]
-        })
+			query_conditions.append({
+				"$or": [
+					{ "name": { "$regex": regex_pattern, "$options": "i" } },
+					{ "last_name": { "$regex": regex_pattern, "$options": "i" } }
+				]
+			})
 
-    final_filter    = { "$and": query_conditions } if query_conditions else {}
-    members         = await Member.find( final_filter ).skip( ( pagination.page - 1 ) * pagination.size ).limit( pagination.size ).to_list()
-    total           = await Member.find( final_filter ).count()
+		final_filter = { "$and": query_conditions }
 
-    return members, total
+	members	= await Member.find( final_filter ).skip( ( pagination.page - 1 ) * pagination.size ).limit( pagination.size ).to_list()
+	total	= await Member.find( final_filter ).count()
+
+	return members, total
 
 
 async def update_member(

@@ -15,7 +15,7 @@ from utils.classes import LDS_CLASSES
 from entities.qr import QR
 
 # FastApi
-from fastapi import Body, status, APIRouter, Path, HTTPException, Query, Depends
+from fastapi import Body, status, APIRouter, Path, HTTPException, Query, Depends, Response
 
 # DTOs
 from dtos.qr_dto import QRCreateDTO, QRReadDTO, QRUpdateDTO, QRWithCountDTO, PaginatedQRResponse
@@ -65,37 +65,38 @@ async def get_all_qrs(
     status_code     = status.HTTP_201_CREATED,
     tags            = [tags]
 )
-async def create_sunday_qrs() -> List[QRReadDTO]:
+async def create_sunday_qrs(
+    response : Response
+) -> List[QRReadDTO]:
     chile_tz        = pytz.timezone( TIMEZONE )
     now_utc         = datetime.now( chile_tz )
     current_date    = now_utc.date()
-
-    if ( now_utc.weekday() != 6 ):
-        raise HTTPException(
-            status_code = status.HTTP_400_BAD_REQUEST,
-            detail      = "Solo se pueden generar los QRs los días domingo."
-        )
+    is_sunday       = now_utc.weekday() == 6
 
     existing_qrs = await qr_services.get_qrs_by_date( current_date )
 
-    if ( existing_qrs ):
-        return existing_qrs
+    if ( not is_sunday ):
+        response.status_code = status.HTTP_200_OK
+        return existing_qrs or [ ]
 
-    start_hour  = os.getenv( "START_HOUR" )
-    end_hour    = os.getenv( "END_HOUR" )
-    new_qrs     = [ ]
+    if ( not existing_qrs ):
+        start_hour  = os.getenv( "START_HOUR" )
+        end_hour    = os.getenv( "END_HOUR" )
+        new_qrs     = [ ]
 
-    for item in LDS_CLASSES:
-        qr_data = {
-            "type"          : item[ "slug" ],
-            "date"          : now_utc,
-            "start_hour"    : start_hour,
-            "end_hour"      : end_hour
-        }
+        for item in LDS_CLASSES:
+            qr_data = {
+                "type"          : item[ "slug" ],
+                "date"          : now_utc,
+                "start_hour"    : start_hour,
+                "end_hour"      : end_hour
+            }
 
-        new_qrs.append( QR( **qr_data ))
+            new_qrs.append( QR( **qr_data ))
 
-    return await qr_services.create_qrs( new_qrs )
+        await qr_services.create_qrs( new_qrs )
+
+    return await qr_services.get_qrs_by_date( current_date )
 
 # Create QR
 @qr_router.post(

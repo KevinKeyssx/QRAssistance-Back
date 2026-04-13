@@ -15,6 +15,8 @@ class AssistanceReadDTO( BaseModel ):
     member      : MemberReadDTO = Field( ..., description="Miembro que asistió" )
     qr          : QRReadDTO     = Field( ..., description="QR al que asistió" )
     created_at  : datetime      = Field( ..., description="Fecha de creación de la asistencia" )
+    updated_at  : datetime      = Field( ..., description="Fecha de actualización de la asistencia" )
 
     class Config:
         populate_by_name = True
+        from_attributes  = True

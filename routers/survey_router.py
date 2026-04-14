@@ -34,7 +34,6 @@ collection      = "surveys"
 endpoint        = version + collection + "/"
 tags            = "Survey Services"
 
-
 # ── GET all surveys (year obligatorio, month opcional) ──────────────────────
 @survey_router.get(
     path            = endpoint,
@@ -64,6 +63,37 @@ async def get_all_surveys(
     - **month** (opcional): si se incluye, filtra por ese mes dentro del año dado.
     """
     return await survey_services.get_all_surveys( year=year, month=month )
+
+
+# ── GET survey statistics ─────────────────────────────────────────────────────
+@survey_router.get(
+    path            = endpoint + "stats",
+    status_code     = status.HTTP_200_OK,
+    summary         = "Obtiene las estadísticas de las encuestas agregadas dinámicamente.",
+    tags            = [tags]
+)
+async def get_survey_stats(
+    year  : int = Query(
+        ...,
+        ge          = 2026,
+        le          = 2100,
+        description = "Año (obligatorio)"
+    ),
+    month : Optional[int] = Query(
+        None,
+        ge          = 1,
+        le          = 12,
+        description = "Mes (opcional, 1-12)"
+    ),
+    class_type: Optional[str] = Query(
+        None,
+        description = "Tipo de clase (opcional)"
+    )
+):
+    """
+    ## Retorna datos agregados de respuestas yes/no por cada clase y pregunta.
+    """
+    return await survey_services.get_survey_stats( year=year, month=month, class_type=class_type )
 
 
 # ── POST create survey ────────────────────────────────────────────────────────
@@ -113,49 +143,3 @@ async def create_survey( data: SurveyCreateDTO ) -> SurveyReadDTO:
     )
 
     return await survey_services.create_survey( survey )
-
-
-# ── PATCH update survey ───────────────────────────────────────────────────────
-# @survey_router.patch(
-#     path            = endpoint + "{survey_id}",
-#     response_model  = SurveyReadDTO,
-#     status_code     = status.HTTP_200_OK,
-#     summary         = "Actualiza las respuestas de una encuesta existente.",
-#     tags            = [tags]
-# )
-# async def update_survey(
-#     survey_id   : str,
-#     data        : SurveyUpdateDTO
-# ) -> SurveyReadDTO:
-#     """
-#     ## Actualiza parcialmente una encuesta.
-
-#     Solo se actualizan los campos enviados en el body (PATCH semántico).
-#     """
-#     update_fields = {
-#         key : value
-#         for key, value in data.model_dump().items()
-#         if value is not None
-#     }
-
-#     if not update_fields:
-#         raise HTTPException(
-#             status_code = status.HTTP_400_BAD_REQUEST,
-#             detail      = {
-#                 "code"    : ErrorCode.ERR_302,
-#                 "message" : "No se enviaron campos para actualizar."
-#             }
-#         )
-
-#     survey = await survey_services.update_survey( survey_id, update_fields )
-
-#     if not survey:
-#         raise HTTPException(
-#             status_code = status.HTTP_404_NOT_FOUND,
-#             detail      = {
-#                 "code"    : ErrorCode.ERR_302,
-#                 "message" : "Encuesta no encontrada."
-#             }
-#         )
-
-#     return survey

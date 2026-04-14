@@ -1,6 +1,8 @@
 # Python
-from typing     import List, Optional
-from datetime   import datetime
+from typing         import List, Optional
+from datetime       import datetime
+from beanie         import Link
+from collections    import defaultdict
 
 # Entities
 from entities.surveys   import Survey
@@ -42,7 +44,7 @@ async def get_all_surveys(
         start_range = datetime( year, 1,  1,  0,  0,  0 )
         end_range   = datetime( year, 12, 31, 23, 59, 59 )
 
-    return await (
+    surveys = await (
         Survey
         .find(
             Survey.created_at >= start_range,
@@ -53,6 +55,8 @@ async def get_all_surveys(
         .to_list()
     )
 
+    return [ s for s in surveys if type(s.member) is not Link and type(s.qr) is not Link ]
+
 
 async def create_survey( survey: Survey ) -> Survey:
     created = await survey.insert()
@@ -60,28 +64,30 @@ async def create_survey( survey: Survey ) -> Survey:
     return created
 
 
-# async def update_survey(
-#     survey_id   : str,
-#     update_data : dict
-# ) -> Optional[ Survey ]:
-#     survey = await Survey.get( survey_id )
-
-#     if not survey:
-#         return None
-
-#     update_data[ "updated_at" ] = datetime.utcnow()
-
-#     await survey.set( update_data )
-
-#     return survey
 
 
-# async def delete_survey( survey_id: str ) -> bool:
-#     survey = await Survey.get( survey_id )
+async def get_survey_stats(
+    year: int,
+    month: Optional[int] = None,
+    class_type: Optional[str] = None
+):
+    surveys = await get_all_surveys(year, month)
 
-#     if not survey:
-#         return False
+    stats = defaultdict(lambda: {"yes": 0, "no": 0})
 
-#     await survey.delete()
+    for s in surveys:
+        if class_type and getattr(s.qr, 'type', None) != class_type:
+            continue
 
-    # return True
+        s_dict = s.model_dump() if hasattr(s, "model_dump") else s.dict()
+
+        for field_name, answer in s_dict.items():
+            if field_name.startswith("question"):
+                stat_key = field_name.replace("question", "q")
+
+                if answer:
+                    stats[stat_key]["yes"] += 1
+                else:
+                    stats[stat_key]["no"] += 1
+
+    return stats

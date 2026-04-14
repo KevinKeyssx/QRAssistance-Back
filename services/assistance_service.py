@@ -1,7 +1,7 @@
 from typing import List
 
 # MongoDB
-from beanie     import init_beanie
+from beanie     import init_beanie, Link
 from database   import db
 
 from entities.assistance    import Assistance
@@ -30,7 +30,8 @@ async def register_assistance(
 
 
 async def get_all_assistances() -> List[Assistance]:
-    return await Assistance.find_all( fetch_links = True ).to_list()
+    assistances = await Assistance.find_all( fetch_links = True ).to_list()
+    return [ a for a in assistances if type(a.member) is not Link and type(a.qr) is not Link ]
 
 
 async def get_assistance_by_member_ulid_and_qr_session_id(

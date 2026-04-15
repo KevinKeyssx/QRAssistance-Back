@@ -1,13 +1,19 @@
-from typing import List
-
 # MongoDB
 from beanie     import init_beanie, Link
 from database   import db
 
+# Python
+from typing import List, Optional, Tuple
+from datetime   import datetime
+
+# Entities
 from entities.assistance    import Assistance
 from entities.member        import Member
 from entities.qr            import QR
+
+# Dtos
 from dtos.assistance_dto    import AssistanceCreateDTO
+from dtos.paginated_dto     import Pagination
 
 
 async def init_db():
@@ -29,9 +35,30 @@ async def register_assistance(
     return await new_assistance.insert()
 
 
-async def get_all_assistances() -> List[Assistance]:
-    assistances = await Assistance.find_all( fetch_links = True ).to_list()
-    return [ a for a in assistances if type(a.member) is not Link and type(a.qr) is not Link ]
+async def get_all_assistances(
+    pagination  : Pagination,
+    qr_type     : Optional[str]         = None,
+    date        : Optional[datetime]    = None
+) -> Tuple[List[Assistance], int]:
+    query = Assistance.find( fetch_links=True )
+
+    if qr_type:
+        query = query.find({ "qr.type": qr_type })
+
+    if date:
+        start_of_day    = date.replace( hour=0, minute=0, second=0, microsecond=0 )
+        end_of_day      = date.replace( hour=23, minute=59, second=59, microsecond=999999 )
+        query           = query.find({"qr.date": { "$gte": start_of_day, "$lte": end_of_day }})
+
+    total_count = await query.count()
+
+    assistances = await query.skip(
+        ( pagination.page - 1 ) * pagination.size
+    ).limit( pagination.size ).to_list()
+
+    result = [a for a in assistances if not isinstance( a.member, Link ) and not isinstance( a.qr, Link )]
+
+    return result, total_count
 
 
 async def get_assistance_by_member_ulid_and_qr_session_id(

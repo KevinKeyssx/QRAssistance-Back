@@ -1,8 +1,11 @@
 from pydantic       import BaseModel, Field
 from datetime       import datetime
 from typing         import Optional
-from .member_dto    import MemberReadDTO
-from .qr_dto        import QRReadDTO
+
+# DTOs
+from dtos.paginated_dto import PaginatedResponse
+from .member_dto        import MemberReadDTO
+from .qr_dto            import QRReadDTO
 
 
 class AssistanceCreateDTO( BaseModel ):
@@ -20,3 +23,7 @@ class AssistanceReadDTO( BaseModel ):
     class Config:
         populate_by_name = True
         from_attributes  = True
+
+
+class PaginatedAssistanceResponse( PaginatedResponse[ AssistanceReadDTO ]):
+    pass

@@ -1,4 +1,4 @@
-from fastapi    import APIRouter, status, HTTPException, status, Response
+from fastapi    import APIRouter, status, HTTPException, status, Response, Depends
 import pytz
 
 # Env
@@ -9,11 +9,13 @@ from dotenv import load_dotenv
 from datetime   import datetime, time
 
 # Typing
-from typing     import List, Union
+from typing     import List, Union, Optional
 
 # DTO
-from dtos.assistance_dto    import AssistanceCreateDTO, AssistanceReadDTO
+from dtos.assistance_dto    import AssistanceCreateDTO, AssistanceReadDTO, PaginatedAssistanceResponse
 from dtos.member_dto        import MemberReadDTO
+from dtos.paginated_dto     import Pagination
+
 
 # Services
 import services.assistance_service  as assistance_services
@@ -167,12 +169,28 @@ async def register_assistance(
 # Get all assistances
 @assistance_router.get(
     path            = endpoint,
-    response_model  = List[AssistanceReadDTO],
+    response_model  = PaginatedAssistanceResponse,
     status_code     = status.HTTP_200_OK,
     tags            = [tags]
 )
-async def get_assistances():
-    return await assistance_services.get_all_assistances()
+async def get_assistances(
+    qr_type     : Optional[str]         = None,
+    date        : Optional[datetime]    = None,
+    pagination  : Pagination            = Depends(),
+) -> PaginatedAssistanceResponse:
+    assistances, total_count = await assistance_services.get_all_assistances(
+        pagination, 
+        qr_type, 
+        date
+    )
+
+    return PaginatedAssistanceResponse(
+        items   = assistances,
+        total   = total_count,
+        page    = pagination.page,
+        size    = pagination.size,
+        pages   = ( total_count + pagination.size - 1 ) // pagination.size
+    )
 
 # Delete assistance
 @assistance_router.delete(

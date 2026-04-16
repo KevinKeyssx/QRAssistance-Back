@@ -174,13 +174,15 @@ async def register_assistance(
     tags            = [tags]
 )
 async def get_assistances(
-    qr_type     : Optional[str]         = None,
-    date        : Optional[datetime]    = None,
-    pagination  : Pagination            = Depends(),
+    qr_type      : Optional[str]        = None,
+    member_query : Optional[str]        = None,
+    date         : Optional[datetime]   = None,
+    pagination   : Pagination           = Depends(),
 ) -> PaginatedAssistanceResponse:
     assistances, total_count = await assistance_services.get_all_assistances(
         pagination, 
         qr_type, 
+        member_query,
         date
     )
 

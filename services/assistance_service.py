@@ -36,11 +36,24 @@ async def register_assistance(
 
 
 async def get_all_assistances(
-    pagination  : Pagination,
-    qr_type     : Optional[str]         = None,
-    date        : Optional[datetime]    = None
+    pagination      : Pagination,
+    qr_type         : Optional[str]         = None,
+    member_query    : Optional[str]         = None,
+    date            : Optional[datetime]    = None
 ) -> Tuple[List[Assistance], int]:
     query = Assistance.find( fetch_links=True )
+
+    if member_query:
+        # Buscamos miembros que coincidan con el nombre o apellido
+        matching_members = await Member.find({
+            "$or": [
+                { "name"        : { "$regex": member_query, "$options": "i" } },
+                { "last_name"   : { "$regex": member_query, "$options": "i" } }
+            ]
+        }).to_list()
+        
+        member_ids = [ m.id for m in matching_members ]
+        query      = query.find({ "member.$id": { "$in": member_ids } })
 
     if qr_type:
         query = query.find({ "qr.type": qr_type })

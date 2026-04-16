@@ -8,6 +8,7 @@ from routers.member_router      import member_router
 from routers.assistance_router  import assistance_router
 from routers.survey_router      import survey_router
 from routers.analytics_router   import analytics_router
+from routers.whitelist_router   import whitelist_router
 
 # Services
 from database import init_database
@@ -42,3 +43,4 @@ app.include_router( member_router )
 app.include_router( assistance_router )
 app.include_router( survey_router )
 app.include_router( analytics_router )
+app.include_router( whitelist_router )

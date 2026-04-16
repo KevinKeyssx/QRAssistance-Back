@@ -7,6 +7,7 @@ from entities.qr            import QR
 from entities.member        import Member
 from entities.assistance    import Assistance
 from entities.surveys       import Survey
+from entities.whitelist     import WhiteList
 
 # Env
 import os
@@ -32,6 +33,7 @@ async def init_database():
             QR,
             Member,
             Assistance,
-            Survey
+            Survey,
+            WhiteList
         ]
     )

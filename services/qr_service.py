@@ -90,7 +90,6 @@ async def get_all_qrs_with_stats(
     pages_count = ( total_items + size - 1 ) // size
 
     # 4. Obtener los QRs paginados
-    # .skip() se salta los elementos de páginas anteriores
     qrs = await query.sort( "-date" ).skip(( page - 1 ) * size ).limit( size ).to_list()
 
     results = []

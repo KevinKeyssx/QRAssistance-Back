@@ -14,6 +14,12 @@ from fastapi import Body, status, APIRouter, Path, HTTPException, Depends, Query
 from dtos.member_dto import MemberCreateDTO, MemberReadDTO, MemberUpdateDTO, PaginatedMemberResponse
 from dtos.paginated_dto import Pagination
 
+# Services
+import services.assistance_service as assistance_services
+
+# Utils
+from utils.consts import ErrorCode
+
 # Variables
 member_router   = APIRouter()
 version         = "/api/v1/"
@@ -44,8 +50,27 @@ async def register_member(
         )
 
     new_member = Member( **member_in.model_dump() )
+    await new_member.insert()
 
-    return await new_member.insert()
+    # Si viene qr_session_id, intentamos registrar la asistencia
+    if member_in.qr_session_id:
+        try:
+            await assistance_services.process_assistance_registration( 
+                member        = new_member, 
+                qr_session_id = member_in.qr_session_id 
+            )
+        except HTTPException:
+            # Si falla la asistencia, devolvemos un error 206 con los datos del miembro (el miembro NO se borra)
+            raise HTTPException(
+                status_code = status.HTTP_400_BAD_REQUEST,
+                detail      = {
+                    "code"    : ErrorCode.ERR_206,
+                    "message" : "El miembro se pudo registrar pero no su asistencia.",
+                    "data"    : MemberReadDTO.from_attributes( new_member ).model_dump()
+                }
+            )
+
+    return new_member
 
 # READ ALL
 @member_router.get(

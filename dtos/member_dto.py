@@ -9,8 +9,9 @@ from dtos.paginated_dto import PaginatedResponse
 class MemberCreateDTO( BaseModel ):
     name        : str       = Field( ..., min_length=2, max_length=50, description="Nombre del miembro" )
     last_name   : str       = Field( ..., min_length=2, max_length=50, description="Apellido del miembro" )
-    classes     : List[ str ] = Field( default_factory=list, description="Clases del miembro" )
-    saveFinger  : bool      = Field( default=False, description="Indica si se debe guardar la huella digital del miembro" )
+    classes       : List[ str ] = Field( default_factory=list, description="Clases del miembro" )
+    saveFinger    : bool        = Field( default=False, description="Indica si se debe guardar la huella digital del miembro" )
+    qr_session_id : Optional[ str ] = Field( default=None, description="ID de la sesión QR para registro automático" )
 
     @field_validator( 'name', 'last_name' )
     @classmethod

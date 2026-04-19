@@ -24,6 +24,7 @@ class ErrorCode:
     ERR_203 = "ERR_203"    # El QR es para una fecha futura
     ERR_204 = "ERR_204"    # Fuera del rango horario permitido
     ERR_205 = "ERR_205"    # Formato de hora en QR inválido
+    ERR_206 = "ERR_206"    # El miembro se pudo registrar pero no su asistencia
 
     # ── 3xx · Encuesta (Survey) ──────────────────────────────
     ERR_301 = "ERR_301"    # El miembro no ha completado la encuesta del tercer domingo

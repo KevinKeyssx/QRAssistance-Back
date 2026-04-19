@@ -152,19 +152,19 @@ async def process_assistance_registration(
         return existing
 
     # 3. Validar tercer domingo del mes
-    is_third_sunday = current_date.weekday() == 6 and 15 <= current_date.day <= 21
+    # is_third_sunday = current_date.weekday() == 6 and 15 <= current_date.day <= 21
 
-    if is_third_sunday:
-        survey = await survey_services.get_survey_by_member_and_qr( member, qr )
+    # if is_third_sunday:
+    #     survey = await survey_services.get_survey_by_member_and_qr( member, qr )
 
-        if not survey:
-            raise HTTPException(
-                status_code = status.HTTP_400_BAD_REQUEST,
-                detail      = {
-                    "code"    : ErrorCode.ERR_301,
-                    "message" : "Debes completar la encuesta del tercer domingo antes de registrar asistencia."
-                }
-            )
+    #     if not survey:
+    #         raise HTTPException(
+    #             status_code = status.HTTP_400_BAD_REQUEST,
+    #             detail      = {
+    #                 "code"    : ErrorCode.ERR_301,
+    #                 "message" : "Debes completar la encuesta del tercer domingo antes de registrar asistencia."
+    #             }
+    #         )
 
     # 3.1 Validar Fechas expiradas
     if qr.date.date() < current_date:

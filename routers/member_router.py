@@ -66,7 +66,7 @@ async def register_member(
                 detail      = {
                     "code"    : ErrorCode.ERR_206,
                     "message" : "El miembro se pudo registrar pero no su asistencia.",
-                    "data"    : MemberReadDTO.model_validate( new_member ).model_dump()
+                    "data"    : MemberReadDTO.model_validate( new_member ).model_dump( mode = 'json' )
                 }
             )
 

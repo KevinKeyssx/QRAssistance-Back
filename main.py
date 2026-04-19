@@ -13,6 +13,16 @@ from routers.whitelist_router   import whitelist_router
 # Services
 from database import init_database
 
+# Env
+import os
+from dotenv import load_dotenv
+
+load_dotenv( dotenv_path = '.env' )
+
+
+ORIGINS = os.getenv( "ORIGINS", "*" )
+
+
 # New FastAPI
 app = FastAPI(
 	title       = 'QR Assistance',
@@ -20,9 +30,9 @@ app = FastAPI(
 	version     = '0.0.1'
 )
 
-# !Only dev
-# CORSMiddleware
-origins = [ "*" ]
+
+origins = [ o.strip() for o in ORIGINS.split( "," ) ]
+
 
 # middleware
 app.add_middleware(

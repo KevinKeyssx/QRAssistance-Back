@@ -1,5 +1,6 @@
 # MongoDB
 from beanie     import init_beanie, Link
+from beanie.operators import In
 from database   import db
 
 # Python
@@ -52,7 +53,8 @@ async def get_all_assistances(
     member_query    : Optional[str]         = None,
     date            : Optional[datetime]    = None
 ) -> Tuple[List[Assistance], int]:
-    query = Assistance.find( fetch_links=True )
+    # 1. Preparar lista de expresiones de filtrado de Beanie
+    expressions = []
 
     if member_query:
         # Buscamos miembros que coincidan con el nombre o apellido
@@ -64,23 +66,30 @@ async def get_all_assistances(
         }).to_list()
         
         member_ids = [ m.id for m in matching_members ]
-        query      = query.find({ "member.$id": { "$in": member_ids } })
-
-    if qr_type:
-        query = query.find({ "qr.type": qr_type })
+        expressions.append( In( Assistance.member.id, member_ids ) )
 
     if date:
-        start_of_day    = date.replace( hour=0, minute=0, second=0, microsecond=0 )
-        end_of_day      = date.replace( hour=23, minute=59, second=59, microsecond=999999 )
-        query           = query.find({"qr.date": { "$gte": start_of_day, "$lte": end_of_day }})
+        start_of_day = date.replace( hour = 0, minute = 0, second = 0, microsecond = 0 )
+        end_of_day   = date.replace( hour = 23, minute = 59, second = 59, microsecond = 999999 )
+        expressions.append( Assistance.created_at >= start_of_day )
+        expressions.append( Assistance.created_at <= end_of_day )
 
+    if qr_type:
+        matching_qrs = await QR.find( QR.type == qr_type ).to_list()
+        qr_ids       = [ q.id for q in matching_qrs ]
+        expressions.append( In( Assistance.qr.id, qr_ids ) )
+
+    # 2. Ejecutar consulta usando expresiones nativas
+    query       = Assistance.find( *expressions, fetch_links = True )
     total_count = await query.count()
 
+    # 3. Ejecución de la paginación y obtención de resultados
     assistances = await query.skip(
         ( pagination.page - 1 ) * pagination.size
     ).limit( pagination.size ).to_list()
 
-    result = [a for a in assistances if not isinstance( a.member, Link ) and not isinstance( a.qr, Link )]
+    # Filtrado final de seguridad opcional (Beanie con fetch_links ya lo maneja internamente)
+    result = [ a for a in assistances if a.member is not None and a.qr is not None ]
 
     return result, total_count
 

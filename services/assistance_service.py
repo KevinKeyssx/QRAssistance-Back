@@ -88,8 +88,13 @@ async def get_all_assistances(
         ( pagination.page - 1 ) * pagination.size
     ).limit( pagination.size ).to_list()
 
-    # Filtrado final de seguridad opcional (Beanie con fetch_links ya lo maneja internamente)
-    result = [ a for a in assistances if a.member is not None and a.qr is not None ]
+    # Filtrado final de seguridad: Solo devolver si Beanie resolvió los vínculos
+    # Esto evita Errores 500 cuando un vínculo está roto o no se pudo cargar
+    result = []
+    for a in assistances:
+        if not isinstance( a.member, Link ) and not isinstance( a.qr, Link ):
+            if a.member is not None and a.qr is not None:
+                result.append( a )
 
     return result, total_count
 

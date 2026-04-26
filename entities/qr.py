@@ -17,7 +17,7 @@ class QRType( str, Enum ):
 	PRIMARY		= 'primary'
 	# Specials
 	FAMILY_HOME = 'family-home'
-	SHOW		= 'show'
+	TEATIME		= 'teatime'
 	EVENT		= 'event'
 	MEETING		= 'meeting'
 	SERVICE		= 'service'

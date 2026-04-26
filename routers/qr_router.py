@@ -21,7 +21,10 @@ from fastapi import Body, status, APIRouter, Path, HTTPException, Query, Depends
 from dtos.qr_dto import QRCreateDTO, QRReadDTO, QRUpdateDTO, QRWithCountDTO, PaginatedQRResponse
 from dtos.paginated_dto import Pagination
 
+
 load_dotenv( dotenv_path = '.env' )
+
+
 TIMEZONE = os.getenv( "TIMEZONE" )
 
 # Variables

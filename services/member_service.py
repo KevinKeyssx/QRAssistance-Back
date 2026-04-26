@@ -1,9 +1,11 @@
-from typing             import List, Optional, Tuple
-from dtos.member_dto    import MemberUpdateDTO
-from datetime           import datetime
+import os
+from typing     import List, Optional, Tuple
+from datetime   import datetime
+from dotenv     import load_dotenv
 
 # DTOs
 from dtos.paginated_dto import Pagination
+from dtos.member_dto    import MemberUpdateDTO
 
 # MongoDB
 from beanie import init_beanie
@@ -26,12 +28,21 @@ async def init_db():
 	)
 
 
+load_dotenv( dotenv_path = '.env' )
+
+
+VISITING_MEMBER_ID = os.getenv( "VISITING_MEMBER_ID" )
+
+
 async def get_all_members(
     pagination: Pagination
 ) -> List[Member]:
-    return await Member.find_all(
-        skip = ( pagination.page - 1 ) * pagination.size,
-        limit = pagination.size
+    return await Member.find(
+        Member.id != VISITING_MEMBER_ID
+    ).skip(
+        (pagination.page - 1) * pagination.size
+    ).limit(
+        pagination.size
     ).to_list()
 
 
@@ -136,3 +147,16 @@ async def delete_member( member_id: str ) -> bool:
 
         return True
     return False
+
+
+
+async def get_member_by_data(
+    name: str,
+    last_name: str,
+    classes: List[ str ]
+) -> Optional[Member]:
+    return await Member.find_one(
+        Member.name         == name,
+        Member.last_name    == last_name,
+        Member.classes      == classes
+    )

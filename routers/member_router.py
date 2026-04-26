@@ -27,6 +27,24 @@ collection      = "members"
 endpoint        = version + collection + "/"
 tags            = "Member Services"
 
+async def _attempt_assistance_registration( member: Member, qr_session_id: str ):
+    try:
+        await assistance_services.process_assistance_registration( 
+            member        = member, 
+            qr_session_id = qr_session_id 
+        )
+    except HTTPException as e:
+        # Si falla la asistencia, devolvemos un error 206 con los datos del miembro
+        raise HTTPException(
+            status_code = status.HTTP_400_BAD_REQUEST,
+            detail      = {
+                "code"				: ErrorCode.ERR_206,
+                "message"			: "El miembro se pudo registrar pero no su asistencia.",
+                "assistance_error"	: e.detail,
+                "data"				: MemberReadDTO.model_validate( member ).model_dump( mode = 'json' )
+            }
+        )
+
 # CREATE
 @member_router.post(
     path            = endpoint,
@@ -44,31 +62,32 @@ async def register_member(
     )
 
     if ( is_duplicate ):
+        member = await member_services.get_member_by_data(
+            member_in.name,
+            member_in.last_name,
+            member_in.classes
+        )
+
+        if ( member_in.qr_session_id ):
+            await _attempt_assistance_registration( member, member_in.qr_session_id )
+            return member
+
         raise HTTPException(
             status_code = status.HTTP_400_BAD_REQUEST,
-            detail      = "Miembro ya existe registrado."
+            detail      = {
+                "code"		: ErrorCode.ERR_105,
+                "message"	: f"Este miembro ya existe registrado: {member.name} {member.last_name} ({', '.join(member.classes)})",
+                "data"		: MemberReadDTO.model_validate( member ).model_dump( mode = 'json' )
+            }
         )
 
     new_member = Member( **member_in.model_dump() )
+
     await new_member.insert()
 
     # Si viene qr_session_id, intentamos registrar la asistencia
-    if member_in.qr_session_id:
-        try:
-            await assistance_services.process_assistance_registration( 
-                member        = new_member, 
-                qr_session_id = member_in.qr_session_id 
-            )
-        except HTTPException:
-            # Si falla la asistencia, devolvemos un error 206 con los datos del miembro (el miembro NO se borra)
-            raise HTTPException(
-                status_code = status.HTTP_400_BAD_REQUEST,
-                detail      = {
-                    "code"    : ErrorCode.ERR_206,
-                    "message" : "El miembro se pudo registrar pero no su asistencia.",
-                    "data"    : MemberReadDTO.model_validate( new_member ).model_dump( mode = 'json' )
-                }
-            )
+    if ( member_in.qr_session_id ):
+        await _attempt_assistance_registration( new_member, member_in.qr_session_id )
 
     return new_member
 

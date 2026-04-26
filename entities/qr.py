@@ -24,6 +24,10 @@ class QRType( str, Enum ):
 	OTHER		= 'other'
 
 
+class Category( str, Enum ):
+	CLASS = "class"
+	EVENT = "event"
+
 class QR( Document ):
 	id			: str       = Field( default_factory = lambda: str( ULID() ), alias = "_id" )
 	session_id  : str       = Field( default_factory = lambda: str( ULID() ), min_length = 26, max_length = 26 )
@@ -31,6 +35,7 @@ class QR( Document ):
 	date		: datetime  = Field( ... )
 	start_hour	: str       = Field( ..., min_length = 5, max_length = 5 )
 	end_hour	: str       = Field( ..., min_length = 5, max_length = 5 )
+	category    : Category  = Field( default_factory = lambda: Category.CLASS )
 
 	created_at	: datetime  = Field( default_factory = datetime.utcnow )
 	updated_at	: datetime  = Field( default_factory = datetime.utcnow )

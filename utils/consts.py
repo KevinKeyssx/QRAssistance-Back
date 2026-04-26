@@ -17,6 +17,7 @@ class ErrorCode:
     ERR_102 = "ERR_102"    # QR no encontrado
     ERR_103 = "ERR_103"    # Miembro o QR no encontrado
     ERR_104 = "ERR_104"    # Asistencia no encontrada
+    ERR_105 = "ERR_105"    # Miembro duplicado
 
     # ── 2xx · Validación de Asistencia ──────────────────────
     ERR_201 = "ERR_201"    # El miembro no puede asistir a esta clase

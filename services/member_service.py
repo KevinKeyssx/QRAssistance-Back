@@ -60,16 +60,19 @@ async def check_duplicate_member(
     last_name   : str,
     classes     : List[ str ]
 ) -> bool:
-    member = await Member.find_one(
-        Member.name         == name,
-        Member.last_name    == last_name,
-        Member.classes      == classes
-    )
+    name_regex      = build_accent_regex( name.strip(), exact = True )
+    last_name_regex = build_accent_regex( last_name.strip(), exact = True )
+
+    member = await Member.find_one({
+        "name"		: { "$regex": name_regex, "$options": "i" },
+        "last_name"	: { "$regex": last_name_regex, "$options": "i" },
+        # "classes"	: { "$all": classes, "$size": len( classes ) }
+    })
 
     return member is not None
 
 
-def build_accent_regex( query: str ) -> str:
+def build_accent_regex( query: str, exact: bool = False ) -> str:
     normalized = unicodedata.normalize( 'NFD', query ).encode( 'ascii', 'ignore' ).decode( 'utf-8' )
     safe_query = re.escape( normalized )
 
@@ -90,6 +93,9 @@ def build_accent_regex( query: str ) -> str:
             result += mapping[ char ]
         else:
             result += char
+
+    if ( exact ):
+        return f"^{result}$"
 
     return f".*{result}.*"
 
@@ -151,12 +157,15 @@ async def delete_member( member_id: str ) -> bool:
 
 
 async def get_member_by_data(
-    name: str,
-    last_name: str,
-    classes: List[ str ]
+    name        : str,
+    last_name   : str,
+    classes     : List[ str ]
 ) -> Optional[Member]:
-    return await Member.find_one(
-        Member.name         == name,
-        Member.last_name    == last_name,
-        Member.classes      == classes
-    )
+    name_regex      = build_accent_regex( name.strip(), exact = True )
+    last_name_regex = build_accent_regex( last_name.strip(), exact = True )
+
+    return await Member.find_one({
+        "name"		: { "$regex": name_regex, "$options": "i" },
+        "last_name"	: { "$regex": last_name_regex, "$options": "i" },
+        "classes"	: { "$all": classes, "$size": len( classes ) }
+    })

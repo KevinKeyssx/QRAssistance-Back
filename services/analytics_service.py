@@ -207,7 +207,7 @@ async def get_growth_by_month( year: int ) -> List[ GrowthItemDTO ]:
     # Growth comparing month vs month
     start_date  = datetime( year, 1, 1 )
     end_date    = datetime( year + 1, 1, 1 )
-    
+
     # Optional: fetch previous year last month to calculate Jan growth
     start_prev  = datetime( year - 1, 12, 1 )
 
@@ -227,34 +227,37 @@ async def get_growth_by_month( year: int ) -> List[ GrowthItemDTO ]:
     ]
 
     cursor  = await Assistance.get_motor_collection().aggregate( pipeline ).to_list( length=None )
-    
+
     data_dict = { }
+
     for doc in cursor:
         y = doc[ "_id" ][ "year" ]
         m = doc[ "_id" ][ "month" ]
         data_dict[ ( y, m ) ] = doc[ "total" ]
 
     results = [ ]
-    
+
     for m in range( 1, 13 ):
         total_curr = data_dict.get( ( year, m ), 0 )
-        
+
         # Determine previous month
         prev_m = m - 1
         prev_y = year
+
         if prev_m == 0:
             prev_m = 12
             prev_y = year - 1
-            
+
         total_prev = data_dict.get( ( prev_y, prev_m ), 0 )
-        
+
         growth = "N/A"
+
         if total_prev > 0:
             diff_pct = ( ( total_curr - total_prev ) / total_prev ) * 100
             growth = f"+{diff_pct:.1f}%" if diff_pct >= 0 else f"{diff_pct:.1f}%"
         elif total_curr > 0:
             growth = "+100.0%"
-            
+
         results.append( GrowthItemDTO(
             year        = year,
             month       = m,

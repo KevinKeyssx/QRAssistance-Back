@@ -15,7 +15,7 @@ from fastapi import status, HTTPException
 # Entities
 from entities.assistance    import Assistance
 from entities.member        import Member
-from entities.qr            import QR
+from entities.qr            import QR, Category
 
 # Dtos
 from dtos.assistance_dto    import AssistanceCreateDTO
@@ -142,7 +142,7 @@ async def process_assistance_registration(
         )
 
     # 1. Validamos que el miembro pueda asistir a esta clase
-    if qr.type not in member.classes:
+    if qr.category == Category.CLASS and qr.type not in member.classes:
         raise HTTPException(
             status_code = status.HTTP_400_BAD_REQUEST,
             detail      = {
@@ -160,25 +160,29 @@ async def process_assistance_registration(
 
     # 2.1 Validamos si ya existe la asistencia
     existing = await get_assistance_by_member_ulid_and_qr_session_id(
-        AssistanceCreateDTO( member_ulid = member.ulid_token, qr_session_id = qr_session_id )
+        AssistanceCreateDTO(
+            member_ulid     = member.ulid_token,
+            qr_session_id   = qr_session_id
+        )
     )
+
     if existing:
         return existing
 
     # 3. Validar tercer domingo del mes
-    # is_third_sunday = current_date.weekday() == 6 and 15 <= current_date.day <= 21
+    is_third_sunday = current_date.weekday() == 6 and 15 <= current_date.day <= 21
 
-    # if is_third_sunday:
-    #     survey = await survey_services.get_survey_by_member_and_qr( member, qr )
+    if is_third_sunday:
+        survey = await survey_services.get_survey_by_member_and_qr( member, qr )
 
-    #     if not survey:
-    #         raise HTTPException(
-    #             status_code = status.HTTP_400_BAD_REQUEST,
-    #             detail      = {
-    #                 "code"    : ErrorCode.ERR_301,
-    #                 "message" : "Debes completar la encuesta del tercer domingo antes de registrar asistencia."
-    #             }
-    #         )
+        if not survey:
+            raise HTTPException(
+                status_code = status.HTTP_400_BAD_REQUEST,
+                detail      = {
+                    "code"    : ErrorCode.ERR_301,
+                    "message" : "Debes completar la encuesta del tercer domingo antes de registrar asistencia."
+                }
+            )
 
     # 3.1 Validar Fechas expiradas
     if qr.date.date() < current_date:

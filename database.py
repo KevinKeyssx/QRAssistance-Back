@@ -10,13 +10,11 @@ from entities.surveys       import Survey
 from entities.whitelist     import WhiteList
 
 # Env
-import os
-from dotenv import load_dotenv
+from utils.envs import MONGONAME, MONGO_PUBLIC_URL
 
-load_dotenv( dotenv_path = '.env' )
 
-db_name         = os.getenv( "MONGONAME" )
-MONGOURL        = os.getenv( "MONGO_PUBLIC_URL" )
+db_name         = MONGONAME
+MONGOURL        = MONGO_PUBLIC_URL
 DATABASE_URL    = MONGOURL
 client          = motor.motor_asyncio.AsyncIOMotorClient( DATABASE_URL )
 db              = client[db_name]

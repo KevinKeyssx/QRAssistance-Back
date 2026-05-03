@@ -14,13 +14,7 @@ from routers.whitelist_router   import whitelist_router
 from database import init_database
 
 # Env
-import os
-from dotenv import load_dotenv
-
-load_dotenv( dotenv_path = '.env' )
-
-
-ORIGINS = os.getenv( "ORIGINS", "*" )
+from utils.envs import ORIGINS
 
 
 # New FastAPI

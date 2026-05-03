@@ -1,9 +1,9 @@
 # Python
-import os
 import pytz
 from datetime import datetime
 from typing import List
-from dotenv import load_dotenv
+# Env
+from utils.envs import TIMEZONE, START_HOUR, END_HOUR
 
 # Services
 import services.qr_service as qr_services
@@ -22,13 +22,11 @@ from dtos.qr_dto import QRCreateDTO, QRReadDTO, QRUpdateDTO, QRWithCountDTO, Pag
 from dtos.paginated_dto import Pagination
 
 
-load_dotenv( dotenv_path = '.env' )
+# Security
+from utils.security import validate_internal_key
 
 
-TIMEZONE = os.getenv( "TIMEZONE" )
-
-# Variables
-qr_router   = APIRouter()
+qr_router   = APIRouter( dependencies = [ Depends( validate_internal_key ) ] )
 version     = "/api/v1/"
 collection  = "qrs"
 endpoint    = version + collection + "/"
@@ -83,16 +81,14 @@ async def create_sunday_qrs(
         return existing_qrs or [ ]
 
     if ( not existing_qrs ):
-        start_hour  = os.getenv( "START_HOUR" )
-        end_hour    = os.getenv( "END_HOUR" )
         new_qrs     = [ ]
 
         for item in LDS_CLASSES:
             qr_data = {
                 "type"          : item[ "slug" ],
                 "date"          : now_utc,
-                "start_hour"    : start_hour,
-                "end_hour"      : end_hour
+                "start_hour"    : START_HOUR,
+                "end_hour"      : END_HOUR
             }
 
             new_qrs.append( QR( **qr_data ))

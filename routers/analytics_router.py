@@ -1,4 +1,4 @@
-from fastapi    import APIRouter, status
+from fastapi    import APIRouter, status, Depends
 from typing     import List, Optional
 
 # DTO
@@ -10,7 +10,11 @@ from dtos.analytics_dto import (
 import services.analytics_service as analytics_services
 
 
-analytics_router    = APIRouter()
+# Security
+from utils.security import validate_internal_key
+
+
+analytics_router    = APIRouter( dependencies = [ Depends( validate_internal_key ) ] )
 version             = "/api/v1/"
 collection          = "analytics"
 endpoint            = f"{version}{collection}/"

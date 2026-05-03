@@ -1,9 +1,8 @@
-from fastapi    import APIRouter, status, HTTPException, status, Response, Depends
+from fastapi    import APIRouter, status, HTTPException, Response, Depends
 import pytz
 
 # Env
-import os
-from dotenv import load_dotenv
+from utils.envs import TIMEZONE
 
 # Datetime
 from datetime   import datetime, time
@@ -30,13 +29,11 @@ from entities.qr            import QR
 from utils.consts import ErrorCode
 
 
-load_dotenv( dotenv_path = '.env' )
+# Security
+from utils.security import validate_internal_key
 
 
-TIMEZONE = os.getenv( "TIMEZONE" )
-
-
-assistance_router   = APIRouter()
+assistance_router   = APIRouter( dependencies = [ Depends( validate_internal_key ) ] )
 version             = "/api/v1/"
 collection          = "assistances"
 endpoint            = f"{version}{collection}/"

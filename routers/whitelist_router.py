@@ -12,7 +12,7 @@ import services.whitelist_service as whitelist_services
 from entities.whitelist import WhiteList
 
 # FastApi
-from fastapi import status, APIRouter, Path, HTTPException, Request, Header
+from fastapi import status, APIRouter, Path, HTTPException, Request, Depends
 
 # DTOs
 from dtos.whitelist_dto import WhiteListCreateDTO, WhiteListReadDTO, validateEmail
@@ -25,33 +25,22 @@ endpoint            = version + collection + "/"
 tags                = "Whitelist Services"
 
 # Env
-import os
-from dotenv import load_dotenv
-
-load_dotenv( dotenv_path = '.env' )
+from utils.envs import GOOGLE_CLIENT_ID
 
 
-GOOGLE_CLIENT_ID    = os.getenv( "GOOGLE_CLIENT_ID" )
-INTERNAL_SECRET_KEY = os.getenv( "INTERNAL_SECRET_KEY" )
+# Security
+from utils.security import validate_internal_key
 
 
 @whitelist_router.get(
     path            = endpoint + "{email}",
     response_model  = bool,
     status_code     = status.HTTP_200_OK,
-    tags            = [ tags ]
+    tags            = [ tags ],
+    dependencies    = [ Depends( validate_internal_key ) ]
 )
-async def have_permissions(
-    email: str,
-    x_internal_key: str = Header(None, alias="X-Internal-Key")
-) -> bool:
-    if x_internal_key != INTERNAL_SECRET_KEY:
-        raise HTTPException(
-            status_code = status.HTTP_401_UNAUTHORIZED,
-            detail      = "Servicio no autorizado"
-        )
-
-    is_allowed = await whitelist_services.have_permissions(email)
+async def have_permissions( email: str ) -> bool:
+    is_allowed = await whitelist_services.have_permissions( email )
 
     if not is_allowed:
         raise HTTPException(

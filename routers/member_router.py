@@ -21,7 +21,11 @@ import services.assistance_service as assistance_services
 from utils.consts import ErrorCode
 
 # Variables
-member_router   = APIRouter()
+# Security
+from utils.security import validate_internal_key
+
+
+member_router   = APIRouter( dependencies = [ Depends( validate_internal_key ) ] )
 version         = "/api/v1/"
 collection      = "members"
 endpoint        = version + collection + "/"

@@ -1,11 +1,11 @@
 # Python
-import os
 from datetime   import datetime
 from typing     import List, Optional
-from dotenv     import load_dotenv
+# Env
+from utils.envs import TIMEZONE
 
 # FastAPI
-from fastapi    import APIRouter, status, HTTPException, Query
+from fastapi    import APIRouter, status, HTTPException, Query, Depends
 
 # Services
 import services.survey_service as survey_services
@@ -22,13 +22,11 @@ from dtos.survey_dto    import SurveyCreateDTO, SurveyReadDTO
 from utils.consts import ErrorCode
 
 
-load_dotenv( dotenv_path = '.env' )
+# Security
+from utils.security import validate_internal_key
 
 
-TIMEZONE = os.getenv( "TIMEZONE" )
-
-
-survey_router   = APIRouter()
+survey_router   = APIRouter( dependencies = [ Depends( validate_internal_key ) ] )
 version         = "/api/v1/"
 collection      = "surveys"
 endpoint        = version + collection + "/"

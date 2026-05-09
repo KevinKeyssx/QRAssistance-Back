@@ -12,7 +12,7 @@ import services.qr_service as qr_services
 from utils.classes import LDS_CLASSES
 
 # Model
-from entities.qr import QR
+from entities.qr import QR, Category
 
 # FastApi
 from fastapi import Body, status, APIRouter, Path, HTTPException, Query, Depends, Response
@@ -109,6 +109,8 @@ async def create_qr(
 ) -> QRReadDTO:
     new_qr = QR( **qr_in.model_dump() )
 
+    new_qr.category = Category.EVENT
+
     return await qr_services.create_qr( new_qr )
 
 # Read QR by ID
@@ -139,20 +141,29 @@ async def read_qr(
     tags            = [tags]
 )
 async def update_qr(
-    qr_in: QRUpdateDTO = Body(...),
-    qr_id: str = Path(
-        ...,
-        description="El ID del QR a actualizar")
+	qr_in : QRUpdateDTO = Body( ... ),
+	qr_id : str = Path(
+		...,
+		description = "El ID del QR a actualizar"
+	)
 ) -> QRReadDTO:
-    updated_qr = await qr_services.update_qr( qr_id, qr_in.model_dump( exclude_unset=True ))
+	qr = await qr_services.get_qr_by_id( qr_id )
 
-    if not updated_qr:
-        raise HTTPException(
-            status_code = status.HTTP_404_NOT_FOUND,
-            detail      = "QR no encontrado"
-        )
+	if ( not qr ):
+		raise HTTPException(
+			status_code = status.HTTP_404_NOT_FOUND,
+			detail      = "QR no encontrado"
+		)
 
-    return updated_qr
+	if ( qr.category == Category.CLASS ):
+		raise HTTPException(
+			status_code = status.HTTP_400_BAD_REQUEST,
+			detail      = "No se puede editar el QR"
+		)
+
+	updated_qr = await qr_services.update_qr( qr, qr_in.model_dump( exclude_unset = True ) )
+
+	return updated_qr
 
 # Delete QR
 @qr_router.delete(

@@ -4,6 +4,7 @@ from ulid               import ULID
 from datetime           import datetime
 from entities.member    import Member
 from entities.qr        import QR
+from typing             import Optional
 
 
 class Assistance( Document ):
@@ -11,6 +12,8 @@ class Assistance( Document ):
 
     member      : Link[Member]
     qr          : Link[QR]
+
+    visitor_id  : Optional[str] = Field( None )
 
     created_at  : datetime    = Field( default_factory=datetime.utcnow )
     updated_at  : datetime    = Field( default_factory=datetime.utcnow )

@@ -9,8 +9,11 @@ from beanie import init_beanie
 from database import db
 
 # Collections
-from entities.qr import QR
+from entities.qr import QR, Category
 from entities.assistance import Assistance
+
+# FastApi
+from fastapi import HTTPException
 
 
 async def init_db():
@@ -48,17 +51,18 @@ async def get_qrs_by_date( target_date ) -> List[ QR ]:
     return await QR.find( QR.date >= start_of_day, QR.date <= end_of_day ).to_list()
 
 
-async def update_qr( qr_id: str, update_data: dict ) -> Optional[QR]:
-    qr = await QR.get( qr_id )
+async def update_qr( qr : QR, update_data : dict ) -> QR:
+	try:
+		update_data[ "updated_at" ] = datetime.utcnow()
 
-    if qr:
-        update_data["updated_at"] = datetime.utcnow()
+		await qr.set( update_data )
 
-        await qr.set( update_data )
-
-        return qr
-
-    return None
+		return qr
+	except Exception as e:
+		raise HTTPException(
+			status_code = 400,
+			detail      = "No se puede editar el QR, intente nuevamente."
+		)
 
 
 async def delete_qr( qr_id: str ) -> bool:

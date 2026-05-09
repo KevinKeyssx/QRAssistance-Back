@@ -18,3 +18,6 @@ END_HOUR            = os.getenv( "END_HOUR" )
 # Database
 MONGONAME           = os.getenv( "MONGONAME" )
 MONGO_PUBLIC_URL    = os.getenv( "MONGO_PUBLIC_URL" )
+
+# Other
+VISITING_MEMBER_ID  = os.getenv( "VISITING_MEMBER_ID" )

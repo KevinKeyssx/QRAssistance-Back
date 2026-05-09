@@ -13,6 +13,11 @@ class AssistanceCreateDTO( BaseModel ):
     qr_session_id   : str = Field( ..., description="ID de la sesión del QR" )
 
 
+class AssistanceCreateVisitorDTO( BaseModel ):
+    qr_session_id   : str = Field( ..., description="ID de la sesión del QR" )
+    visitor_id      : str = Field( ..., description="ID del visitante" )
+
+
 class AssistanceReadDTO( BaseModel ):
     id          : str           = Field( ..., alias="_id", description="ID de la asistencia" )
     member      : MemberReadDTO = Field( ..., description="Miembro que asistió" )

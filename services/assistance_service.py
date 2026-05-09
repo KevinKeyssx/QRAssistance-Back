@@ -4,7 +4,6 @@ from beanie.operators import In
 from database   import db
 
 # Python
-import os
 import pytz
 from typing import List, Optional, Tuple, Union
 from datetime   import datetime, time
@@ -27,6 +26,9 @@ import services.survey_service as survey_services
 # Utils
 from utils.consts import ErrorCode
 
+# Envs
+from utils.envs import TIMEZONE
+
 
 async def init_db():
 	await init_beanie(
@@ -36,15 +38,20 @@ async def init_db():
 
 
 async def register_assistance(
-    member  : Member,
-    qr      : QR
+	member     : Member,
+	qr         : QR,
+	visitor_id : Optional[ str ] = None
 ) -> Assistance:
-    if not member or not qr:
-        return None
+	if ( not member or not qr ):
+		return None
 
-    new_assistance = Assistance( member = member, qr = qr )
+	new_assistance = Assistance(
+		member     = member,
+		qr         = qr,
+		visitor_id = visitor_id
+	)
 
-    return await new_assistance.insert()
+	return await new_assistance.insert()
 
 
 async def get_all_assistances(
@@ -152,8 +159,7 @@ async def process_assistance_registration(
         )
 
     # 2. Obtener hora actual en la zona horaria configurada
-    timezone_env    = os.getenv( "TIMEZONE", "America/Santiago" )
-    chile_tz        = pytz.timezone( timezone_env )
+    chile_tz        = pytz.timezone( TIMEZONE )
     now_local       = datetime.now( chile_tz )
     current_date    = now_local.date()
     current_time    = now_local.time()
@@ -234,7 +240,7 @@ async def process_assistance_registration(
             }
         )
 
-    # 5. Registramos asistencia
+	# 5. Registramos asistencia
     assistance = await register_assistance( member, qr )
 
     if not assistance:
